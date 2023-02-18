@@ -101,6 +101,7 @@ target_sources(tests
   src/good/ReloadAfterFailedCompilation_test.cpp
   src/good/OneFrameCompileReload_test.cpp
   src/good/MacosFunctionOutOfScope_test.cpp
+  src/good/DepfileDependenciesHandler_test.cpp
 
   src/bad/LambdaFunctionWithCapturesBadCase2_test.cpp
   src/bad/LambdaFunctionWithCapturesBadCase_test.cpp
@@ -114,6 +115,7 @@ target_link_libraries(tests
   PRIVATE
   jet-live
   undefined_symbols
+  lib_teenypath
   )
 set_target_properties(tests
   PROPERTIES
