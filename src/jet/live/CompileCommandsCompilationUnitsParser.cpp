@@ -127,10 +127,10 @@ namespace jet
             cu.sourceFilePath = cmdJson["file"];
             TeenyPath::path sourceFilePath{cu.sourceFilePath};
             if (sourceFilePath.is_absolute()) {
-                cu.sourceFilePath = TeenyPath::path(cu.sourceFilePath).resolve_absolute().string();
+                cu.sourceFilePath = TeenyPath::path(cu.sourceFilePath).string();
             } else {
                 sourceFilePath = TeenyPath::path{cu.compilationDirStr} / sourceFilePath;
-                cu.sourceFilePath = sourceFilePath.resolve_absolute().string();
+                cu.sourceFilePath = sourceFilePath.lexically_normalized().string();
             }
             if (!TeenyPath::path{cu.sourceFilePath}.exists()) {
                 context->events->addLog(LogSeverity::kWarning, "Source file doesn't exist: " + sourceFilePath.string());
@@ -160,12 +160,12 @@ namespace jet
             if (objFilePath.is_absolute()) {
                 cu.objFilePath = objFilePath.string();
             } else {
-                cu.objFilePath = (TeenyPath::path{cu.compilationDirStr} / objFilePath).string();
+                cu.objFilePath = (TeenyPath::path{cu.compilationDirStr} / objFilePath).lexically_normalized().string();
             }
 
             TeenyPath::path depFilePath{cu.depFilePath};
             if (!depFilePath.is_absolute()) {
-                cu.depFilePath = (TeenyPath::path{cu.compilationDirStr} / cu.depFilePath).string();
+                cu.depFilePath = (TeenyPath::path{cu.compilationDirStr} / cu.depFilePath).lexically_normalized().string();
             }
 
             cu.compilerPath = parser[0];
