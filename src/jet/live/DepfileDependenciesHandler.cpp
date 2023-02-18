@@ -5,6 +5,7 @@
 #include <streambuf>
 #include <teenypath.h>
 #include "jet/live/LiveContext.hpp"
+#include <regex>
 
 namespace jet
 {
@@ -41,52 +42,58 @@ namespace jet
             return deps;
         }
 
+        // Relative paths expand to this
+        TeenyPath::path baseDir{cu.compilationDirStr};
+
         std::string line;
-        // First line is a path to the .o file
         std::getline(f, line);
-        while (std::getline(f, line)) {
-            line.erase(0, line.find_first_not_of(' '));
-            bool matches = false;
-            for (const auto& dir : context->dirFilters) {
-                if (line.find(dir) != std::string::npos) {
-                    matches = true;
-                    break;
-                }
+
+        /*
+          The first line is a path to the .o file, eg in cmake:
+
+          main.cpp.o: \
+          main.cpp \
+          lib1.hpp \
+          lib2.hpp \
+          lib3.hpp
+
+          But, it can happen that first line contains also dependencies (happens with meson/ninja):
+
+          main.cpp.o: main.cpp lib1.hpp \
+          lib2.hpp \
+          lib3.hpp
+        */
+        line = line.substr(line.find(':')+1);
+
+        // the ugliness of \\\\ means essentially a backslash character
+        std::regex dependencyRegex("([^\\\\ ]+)");
+
+        do {
+          auto begin = std::sregex_iterator(line.begin(), line.end(), dependencyRegex);
+          const auto end = std::sregex_iterator();
+          for (auto it = begin; it != end; ++it) {
+            TeenyPath::path dependencyPath{it->str()};
+            if(!dependencyPath.is_absolute()) {
+              dependencyPath = (baseDir / dependencyPath);
             }
-            if (!matches) {
-                continue;
+            dependencyPath = dependencyPath.lexically_normalized();
+
+            std::string absPathStr = dependencyPath.string();
+            const auto matchedFilter = std::find_if(context->dirFilters.cbegin(), context->dirFilters.cend(),
+                                                    [&absPathStr](const std::string &dirFilter) {
+                                                      return (absPathStr.find(dirFilter) != std::string::npos);
+                                                    });
+            if(matchedFilter == context->dirFilters.cend() && !context->dirFilters.empty()) {
+              continue;
             }
 
-            line.erase(line.find_last_not_of(" \\") + 1);
-
-            auto found = line.find(' ');
-            if (found == std::string::npos) {
-                auto p = TeenyPath::path{line};
-                if (p.exists()) {
-                    deps.insert(p.resolve_absolute().string());
-                } else {
-                    context->events->addLog(LogSeverity::kWarning, "Depfile doesn't exist: " + p.string());
-                }
+            if (dependencyPath.exists()) {
+              deps.insert(dependencyPath.string());
             } else {
-                std::size_t prev = 0;
-                while (found != std::string::npos) {
-                    auto p = TeenyPath::path{line.substr(prev, found - prev)};
-                    if (p.exists()) {
-                        deps.insert(p.resolve_absolute().string());
-                    } else {
-                        context->events->addLog(LogSeverity::kWarning, "Depfile doesn't exist: " + p.string());
-                    }
-                    prev = found + 1;
-                    found = line.find(' ', prev);
-                }
-                auto p = TeenyPath::path{line.substr(prev, found - prev)};
-                if (p.exists()) {
-                    deps.insert(p.resolve_absolute().string());
-                } else {
-                    context->events->addLog(LogSeverity::kWarning, "Depfile doesn't exist: " + p.string());
-                }
+              context->events->addLog(LogSeverity::kWarning, "Depfile doesn't exist: " + dependencyPath.string());
             }
-        }
+          }
+        } while (std::getline(f, line));
 
         return deps;
     }
