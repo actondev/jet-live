@@ -182,6 +182,10 @@ namespace jet
             return m_compileCommandsPath;
         }
 
+        if(TeenyPath::path(context->liveConfig.compileCommandsPath).exists()){
+            return context->liveConfig.compileCommandsPath;
+        }
+
         // Trying to find `compile_commands.json` in current and parent directories
         auto dbPath = TeenyPath::path{context->thisExecutablePath}.parent_path() / "compile_commands.json";
         while (!dbPath.exists() && !dbPath.is_empty()) {
