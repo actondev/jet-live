@@ -55,7 +55,7 @@ namespace jet
          */
         Status getStatus() const;
 
-    private:
+    protected:
         std::unique_ptr<LiveContext> m_context;
         std::unique_ptr<FileWatcher> m_fileWatcher;
         std::unique_ptr<Compiler> m_compiler;

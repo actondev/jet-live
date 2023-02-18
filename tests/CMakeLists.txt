@@ -102,6 +102,7 @@ target_sources(tests
   src/good/OneFrameCompileReload_test.cpp
   src/good/MacosFunctionOutOfScope_test.cpp
   src/good/DepfileDependenciesHandler_test.cpp
+  src/good/CompileCommandsCompilationUnitsParser_test.cpp
 
   src/bad/LambdaFunctionWithCapturesBadCase2_test.cpp
   src/bad/LambdaFunctionWithCapturesBadCase_test.cpp
