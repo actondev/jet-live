@@ -163,6 +163,11 @@ namespace jet
                 cu.objFilePath = (TeenyPath::path{cu.compilationDirStr} / objFilePath).string();
             }
 
+            TeenyPath::path depFilePath{cu.depFilePath};
+            if (!depFilePath.is_absolute()) {
+                cu.depFilePath = (TeenyPath::path{cu.compilationDirStr} / cu.depFilePath).string();
+            }
+
             cu.compilerPath = parser[0];
             res[cu.sourceFilePath] = cu;
             wordfree(&result);
